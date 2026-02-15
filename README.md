@@ -1,16 +1,86 @@
-# React + Vite
+🍲 LocalChefBazaar
+📌 Project Purpose
+LocalChefBazaar is a role‑based web platform where users, chefs, and admins interact seamlessly.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Users can browse meals, place orders, add favorites, and manage reviews.
 
-Currently, two official plugins are available:
+Chefs can create, update, and manage their meals, and handle order requests.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Admins can manage users, requests, and view platform statistics.
 
-## React Compiler
+This project ensures secure role‑based access with JWT authentication and provides a smooth dashboard experience for each role.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+🌐 Live URL
+👉 LocalChefBazaar Live 
 
-## Expanding the ESLint configuration
+🚀 Key Features
+Authentication & Authorization
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+JWT‑based login/register with secure cookies
+
+Role‑based routes (User, Chef, Admin)
+
+Dashboards
+
+User Dashboard → Orders, Favorites, Profile
+
+Chef Dashboard → Meals CRUD, Order Requests
+
+Admin Dashboard → Manage Users, Orders, Stats
+
+Meals Management
+
+Browse meals with pagination
+
+Add, update, delete meals (Chef only)
+
+Orders
+
+Place orders (User)
+
+Accept/Reject orders (Chef)
+
+View all orders (Admin)
+
+Favorites
+
+Add/remove meals from favorites
+
+Reviews
+
+Submit and view reviews with ratings
+
+Payments
+
+Stripe integration for secure checkout
+
+Webhook support for payment confirmation
+
+Requests
+
+Role upgrade requests (User → Chef/Admin)
+
+Admin approval/rejection flow
+
+📦 NPM Packages Used
+express → Backend framework
+
+cors → Cross‑origin resource sharing
+
+dotenv → Environment variable management
+
+mongodb → Database driver
+
+jsonwebtoken (jwt) → Authentication & authorization
+
+cookie-parser → Parse cookies for JWT
+
+stripe → Payment gateway integration
+
+bcrypt → Password hashing (if used for local auth)
+
+react, react-router-dom → Frontend routing
+
+react-hot-toast → Notifications
+
+tailwindcss → Styling framework
