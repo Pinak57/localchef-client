@@ -9,13 +9,16 @@ const OrderPage = ({ meal, user }) => {
   const [address, setAddress] = useState("");
   const axiosSecure = useAxiosSecure();
   const navigate = useNavigate();
-//   const { id } = useParams(); // mealId from route
 
   const handleConfirmOrder = async (e) => {
     e.preventDefault();
+    if (!meal) {
+      toast.error("Meal data not found");
+      return;
+    }
+
     const totalPrice = meal.price * quantity;
 
-    // ✅ SweetAlert confirmation
     const result = await Swal.fire({
       title: `Your total price is ৳${totalPrice}`,
       text: "Do you want to confirm the order?",
@@ -28,11 +31,12 @@ const OrderPage = ({ meal, user }) => {
     if (result.isConfirmed) {
       try {
         const orderData = {
-          foodId: meal._id, // MongoDB meal _id
-          mealName: meal.mealName,
+          mealId: meal._id,              // ✅ use mealId
+          mealName: meal.foodName,       // ✅ use foodName
           price: meal.price,
           quantity,
           chefId: meal.chefId,
+          chefName: meal.chefName,
           paymentStatus: "Pending",
           userEmail: user.email,
           userAddress: address,
@@ -42,11 +46,11 @@ const OrderPage = ({ meal, user }) => {
 
         const res = await axiosSecure.post("/orders", orderData);
 
-        if (res.data.insertedId) {
+        if (res.data.success) {
           Swal.fire("Order placed successfully!", "", "success");
           navigate("/dashboard/my-orders");
         } else {
-          toast.error("Failed to place order");
+          toast.error(res.data.message || "Failed to place order");
         }
       } catch (err) {
         console.error("Order error:", err);
@@ -54,6 +58,10 @@ const OrderPage = ({ meal, user }) => {
       }
     }
   };
+
+  if (!meal) {
+    return <p className="text-center text-red-500">Meal not found.</p>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -69,7 +77,7 @@ const OrderPage = ({ meal, user }) => {
           <label className="block font-medium">Meal Name</label>
           <input
             type="text"
-            value={meal.mealName}
+            value={meal.foodName}   // ✅ use foodName
             readOnly
             className="input input-bordered w-full"
           />

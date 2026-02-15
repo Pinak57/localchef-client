@@ -4,6 +4,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import useAxiosSecure from "../hooks/useAxiosSecure";
 import { AuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
+import Swal from "sweetalert2";
 
 const MealDetails = () => {
   const { id } = useParams();
@@ -14,7 +15,6 @@ const MealDetails = () => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // ✅ Redirect if not logged in
   useEffect(() => {
     if (!user) {
       toast.error("Please login to view meal details");
@@ -22,7 +22,6 @@ const MealDetails = () => {
     }
   }, [user, navigate]);
 
-  // ✅ Fetch meal + reviews
   useEffect(() => {
     const fetchMeal = async () => {
       try {
@@ -49,7 +48,41 @@ const MealDetails = () => {
     fetchReviews();
   }, [id, axiosSecure]);
 
-  // ✅ Submit Review
+    // ✅ Add to favorites
+  const handleAddFavorite = async () => {
+    if (!user) {
+      toast.error("You must be logged in to add favorites");
+      navigate("/login");
+      return;
+    }
+
+    try {
+      const res = await fetch("http://localhost:5000/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include", // ✅ send JWT cookie
+        body: JSON.stringify({
+          mealId: meal._id,
+          mealName: meal.foodName,   // ✅ use foodName from collection
+          chefId: meal.chefId,
+          chefName: meal.chefName,
+          price: meal.price,
+          foodImage: meal.foodImage,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok && data.success) {
+        toast.success(`${meal.foodName} added to favorites!`);
+      } else {
+        toast.error(data.message || "Failed to add favorite");
+      }
+    } catch (err) {
+      console.error("Favorite error:", err);
+      toast.error("Something went wrong");
+    }
+  };
+
   const handleReview = async (e) => {
     e.preventDefault();
     const form = e.target;
@@ -66,7 +99,7 @@ const MealDetails = () => {
         date: new Date().toISOString(),
       });
 
-      if (res.data.insertedId) {
+      if (res.data.success) {
         toast.success("Review submitted successfully!");
         setReviews((prev) => [
           ...prev,
@@ -90,53 +123,61 @@ const MealDetails = () => {
   };
 
   if (loading) return <LoadingSpinner message="Loading meal details..." />;
-
   if (!meal) return <p className="text-center text-gray-600">Meal not found.</p>;
 
   return (
     <div className="container mx-auto px-4 py-8">
-      {/* ✅ Meal Info */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* ✅ Responsive Meal Info */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <img
           src={meal.foodImage || "https://via.placeholder.com/400x250"}
           alt={meal.foodName}
-          className="rounded-lg shadow-md w-full h-80 object-cover"
+          className="rounded-lg shadow-md w-full h-64 sm:h-80 md:h-96 object-cover"
         />
-        <div>
-          <h2 className="text-3xl font-bold mb-4">{meal.foodName}</h2>
-          <p className="text-gray-600 mb-2">Chef: {meal.chefName}</p>
-          <p className="text-gray-600 mb-2">Chef ID: {meal.chefId}</p>
-          <p className="text-gray-600 mb-2">Ingredients: {meal.ingredients}</p>
-          <p className="text-gray-600 mb-2">Delivery Area: {meal.deliveryArea}</p>
-          <p className="text-gray-600 mb-2">Delivery Time: {meal.deliveryTime} mins</p>
-          <p className="text-gray-600 mb-2">Chef’s Experience: {meal.chefExperience}</p>
-          <p className="text-gray-600 mb-2">Rating: ⭐ {meal.rating}</p>
-          <p className="text-orange-600 font-semibold text-xl mb-4">৳{meal.price}</p>
-          <button
-            onClick={() => navigate(`/order/${meal._id}`)}
-            className="btn btn-primary w-full text-white"
-          >
-            Order Now
-          </button>
+        <div className="flex flex-col justify-between">
+          <div>
+            <h2 className="text-2xl md:text-3xl font-bold mb-4">{meal.foodName}</h2>
+            <p className="text-gray-600 mb-2">Chef: {meal.chefName}</p>
+            <p className="text-gray-600 mb-2">Chef ID: {meal.chefId}</p>
+            <p className="text-gray-600 mb-2">Ingredients: {meal.ingredients}</p>
+            <p className="text-gray-600 mb-2">Delivery Area: {meal.deliveryArea}</p>
+            <p className="text-gray-600 mb-2">Delivery Time: {meal.deliveryTime} mins</p>
+            <p className="text-gray-600 mb-2">Chef’s Experience: {meal.chefExperience}</p>
+            <p className="text-gray-600 mb-2">Rating: ⭐ {meal.rating}</p>
+            <p className="text-orange-600 font-semibold text-xl mb-4">৳{meal.price}</p>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-4 mt-4">
+            <button
+              onClick={() => navigate(`/order/${meal._id}`)}
+              className="btn btn-primary flex-1 text-white"
+            >
+              Order Now
+            </button>
+            <button
+              onClick={handleAddFavorite}
+              className="btn btn-secondary flex-1"
+            >
+              Add to Favorites
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* ✅ Review Section */}
+      {/* ✅ Responsive Review Section */}
       <div className="mt-10 bg-white shadow-md rounded-lg p-6">
-        <h3 className="text-2xl font-bold mb-4">Reviews</h3>
+        <h3 className="text-xl md:text-2xl font-bold mb-4">Reviews</h3>
 
-        {/* Existing Reviews */}
         {reviews.length === 0 ? (
           <p className="text-gray-600">No reviews yet. Be the first to review!</p>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-6">
             {reviews.map((rev, i) => (
               <div key={i} className="border-b pb-4">
                 <div className="flex items-center gap-3 mb-2">
                   <img
                     src={rev.reviewerImage}
                     alt={rev.reviewerName}
-                    className="w-10 h-10 rounded-full"
+                    className="w-10 h-10 rounded-full object-cover"
                   />
                   <div>
                     <p className="font-semibold">{rev.reviewerName}</p>
@@ -152,7 +193,7 @@ const MealDetails = () => {
           </div>
         )}
 
-        {/* Add Review Form */}
+        {/* ✅ Responsive Add Review Form */}
         <form onSubmit={handleReview} className="mt-6 space-y-4">
           <div>
             <label className="block mb-1 font-medium">Rating (1-5)</label>

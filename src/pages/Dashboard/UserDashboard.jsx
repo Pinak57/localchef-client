@@ -15,7 +15,7 @@ const UserDashboard = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await axiosSecure.get("/user/dashboard"); // ✅ user-specific endpoint
+        const res = await axiosSecure.get("/user/dashboard");
         setOrders(res.data.orders || []);
         setFavorites(res.data.favorites || []);
       } catch (err) {
@@ -27,6 +27,22 @@ const UserDashboard = () => {
     };
     fetchData();
   }, [axiosSecure]);
+
+  // ✅ Remove from favorites
+  const handleRemoveFavorite = async (mealId) => {
+    try {
+      const res = await axiosSecure.delete(`/favorites/${mealId}`);
+      if (res.data.success) {
+        toast.success("Removed from favorites!");
+        setFavorites((prev) => prev.filter((meal) => meal.mealId !== mealId));
+      } else {
+        toast.error(res.data.message || "Failed to remove favorite");
+      }
+    } catch (err) {
+      console.error("Error removing favorite:", err);
+      toast.error("Something went wrong");
+    }
+  };
 
   if (loading) return <LoadingSpinner message="Loading your dashboard..." />;
 
@@ -81,7 +97,9 @@ const UserDashboard = () => {
                       {order.paymentStatus || "unpaid"}
                     </td>
                     <td className="py-2 px-4">
-                      {new Date(order.orderTime).toLocaleString()}
+                      {order.orderTime
+                        ? new Date(order.orderTime).toLocaleString()
+                        : "N/A"}
                     </td>
                   </tr>
                 ))}
@@ -112,6 +130,18 @@ const UserDashboard = () => {
                   <h3 className="text-lg font-semibold mb-2">{meal.mealName}</h3>
                   <p className="text-gray-600 mb-2">👨‍🍳 {meal.chefName}</p>
                   <p className="font-bold text-orange-600">৳{meal.price}</p>
+                  <p className="text-sm text-gray-500">
+                    Added:{" "}
+                    {meal.addedTime
+                      ? new Date(meal.addedTime).toLocaleString()
+                      : "N/A"}
+                  </p>
+                  <button
+                    onClick={() => handleRemoveFavorite(meal.mealId)}
+                    className="btn btn-error btn-sm mt-3 text-white"
+                  >
+                    Remove
+                  </button>
                 </div>
               </div>
             ))}

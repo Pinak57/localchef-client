@@ -12,8 +12,8 @@ const Favorites = () => {
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        const res = await axiosSecure.get("/favorites/my-favorites");
-        setFavorites(res.data || []);
+        const res = await axiosSecure.get("/favorites"); // ✅ correct endpoint
+        setFavorites(res.data.favorites || []);
       } catch (err) {
         console.error("Error fetching favorites:", err);
         toast.error("Failed to load favorites");
@@ -25,17 +25,17 @@ const Favorites = () => {
   }, [axiosSecure]);
 
   // ✅ Remove favorite
-  const handleRemove = async (id) => {
+  const handleRemove = async (mealId) => {
     const confirmRemove = window.confirm("Remove this meal from favorites?");
     if (!confirmRemove) return;
 
     try {
-      const res = await axiosSecure.delete(`/favorites/${id}`);
-      if (res.data.deletedCount > 0) {
+      const res = await axiosSecure.delete(`/favorites/${mealId}`);
+      if (res.data.success) {
         toast.success("Meal removed from favorites successfully!");
-        setFavorites(favorites.filter((fav) => fav._id !== id));
+        setFavorites((prev) => prev.filter((fav) => fav.mealId !== mealId));
       } else {
-        toast.error("Failed to remove favorite");
+        toast.error(res.data.message || "Failed to remove favorite");
       }
     } catch (err) {
       console.error("Error removing favorite:", err);
@@ -60,6 +60,7 @@ const Favorites = () => {
           <table className="min-w-full border border-gray-300 rounded-lg shadow-md">
             <thead className="bg-gray-100">
               <tr>
+                <th className="py-2 px-4 text-left">Image</th>
                 <th className="py-2 px-4 text-left">Meal Name</th>
                 <th className="py-2 px-4 text-left">Chef Name</th>
                 <th className="py-2 px-4 text-left">Price</th>
@@ -70,17 +71,24 @@ const Favorites = () => {
             <tbody>
               {favorites.map((fav) => (
                 <tr key={fav._id} className="border-t hover:bg-gray-50">
+                  <td className="py-2 px-4">
+                    <img
+                      src={fav.foodImage || "https://via.placeholder.com/80"}
+                      alt={fav.mealName}
+                      className="w-20 h-16 object-cover rounded"
+                    />
+                  </td>
                   <td className="py-2 px-4">{fav.mealName}</td>
                   <td className="py-2 px-4">{fav.chefName}</td>
                   <td className="py-2 px-4">৳{fav.price || "N/A"}</td>
                   <td className="py-2 px-4">
-                    {fav.dateAdded
-                      ? new Date(fav.dateAdded).toLocaleString()
+                    {fav.addedTime
+                      ? new Date(fav.addedTime).toLocaleString()
                       : "N/A"}
                   </td>
                   <td className="py-2 px-4">
                     <button
-                      onClick={() => handleRemove(fav._id)}
+                      onClick={() => handleRemove(fav.mealId)}
                       className="btn btn-error btn-sm text-white"
                     >
                       Delete

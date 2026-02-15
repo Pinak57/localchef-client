@@ -13,7 +13,7 @@ const MyOrders = () => {
     const fetchOrders = async () => {
       try {
         const res = await axiosSecure.get("/orders/my-orders");
-        setOrders(res.data || []);
+        setOrders(res.data.orders || []); // ✅ backend returns { success, orders }
       } catch (err) {
         console.error("Error fetching orders:", err);
         toast.error("Failed to load your orders");
@@ -31,15 +31,15 @@ const MyOrders = () => {
 
     try {
       const res = await axiosSecure.put(`/orders/${id}/cancel`);
-      if (res.data.modifiedCount > 0) {
+      if (res.data.success && res.data.modifiedCount > 0) {
         toast.success("Order cancelled successfully!");
-        setOrders(
-          orders.map((order) =>
+        setOrders((prev) =>
+          prev.map((order) =>
             order._id === id ? { ...order, orderStatus: "cancelled" } : order
           )
         );
       } else {
-        toast.error("Failed to cancel order");
+        toast.error(res.data.message || "Failed to cancel order");
       }
     } catch (err) {
       console.error("Error cancelling order:", err);
@@ -52,7 +52,7 @@ const MyOrders = () => {
     try {
       const res = await axiosSecure.post("/create-payment-intent", { orderId: id });
       if (res.data?.checkoutUrl) {
-        window.location.href = res.data.checkoutUrl; // redirect to Stripe Checkout
+        window.location.href = res.data.checkoutUrl; // ✅ redirect to Stripe Checkout
       } else {
         toast.error("Payment initialization failed");
       }
@@ -85,13 +85,20 @@ const MyOrders = () => {
                 <h3 className="card-title">{order.mealName}</h3>
                 <p className="text-gray-600">👨‍🍳 Chef: {order.chefName}</p>
                 <p className="text-gray-600">Chef ID: {order.chefId}</p>
-                <p className="text-gray-600">Quantity: {order.quantity}</p>
+                <p className="text-gray-600">Quantity: {order.quantity || 1}</p>
                 <p className="text-gray-600">Price: ৳{order.price}</p>
                 <p className="text-gray-600">
-                  Order Time: {new Date(order.orderTime).toLocaleString()}
+                  Order Time:{" "}
+                  {order.orderTime
+                    ? new Date(order.orderTime).toLocaleString()
+                    : "N/A"}
                 </p>
-                <p className="text-gray-600">Address: {order.userAddress}</p>
-                <p className="text-gray-600">Payment: {order.paymentStatus}</p>
+                <p className="text-gray-600">
+                  Address: {order.userAddress || "Not provided"}
+                </p>
+                <p className="text-gray-600">
+                  Payment: {order.paymentStatus || "Pending"}
+                </p>
                 <p
                   className={`font-semibold ${
                     order.orderStatus === "pending"

@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -7,43 +7,6 @@ const MealCard = ({ meal }) => {
   const { user } = useContext(AuthContext);
   const navigate = useNavigate();
 
-  // ✅ Add to favorites
-  const handleAddFavorite = async () => {
-    if (!user) {
-      toast.error("You must be logged in to add favorites");
-      navigate("/login");
-      return;
-    }
-
-    try {
-      const res = await fetch("http://localhost:5000/favorites", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          mealId: meal._id,
-          mealName: meal.foodName,   // ✅ correct field name
-          foodImage: meal.foodImage,
-          price: meal.price,
-          chefId: meal.chefId,
-          chefName: meal.chefName,
-          userEmail: user.email,
-        }),
-        credentials: "include",
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        toast.success("Added to favorites!");
-      } else {
-        toast.error(data.message || "Failed to add favorite");
-      }
-    } catch (err) {
-      console.error("Favorite error:", err);
-      toast.error("Something went wrong");
-    }
-  };
 
   // ✅ See details
   const handleSeeDetails = () => {
@@ -55,15 +18,7 @@ const MealCard = ({ meal }) => {
     }
   };
 
-  // ✅ Order Now (future integration)
-  const handleOrderNow = () => {
-    if (user) {
-      navigate(`/order/${meal._id}`);
-    } else {
-      toast.error("Please login to place an order");
-      navigate("/login");
-    }
-  };
+ 
 
   return (
     <div className="card bg-white shadow-md hover:shadow-lg transition rounded-lg">
@@ -95,18 +50,8 @@ const MealCard = ({ meal }) => {
           >
             Details
           </button>
-          <button
-            onClick={handleAddFavorite}
-            className="btn btn-secondary btn-sm"
-          >
-            Add to Favorites
-          </button>
-          <button
-            onClick={handleOrderNow}
-            className="btn btn-accent btn-sm text-white"
-          >
-            Order Now
-          </button>
+         
+          
         </div>
       </div>
     </div>

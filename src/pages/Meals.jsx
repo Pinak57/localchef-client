@@ -28,7 +28,7 @@ const Meals = () => {
           `/meals?page=${currentPage}&limit=${mealsPerPage}&search=${search}`
         );
         setMeals(res.data.meals || []);
-        setTotalMeals(res.data.totalMeals || 0); // ✅ fixed
+        setTotalMeals(res.data.totalMeals || 0);
       } catch (err) {
         console.error("Error fetching meals:", err);
         toast.error("Failed to load meals");
@@ -68,7 +68,7 @@ const Meals = () => {
         🍴 All Meals
       </h2>
 
-      {/* ✅ Search Bar */}
+      {/* ✅ Search & Sort */}
       <div className="flex justify-center mb-6 gap-4">
         <input
           type="text"
@@ -112,7 +112,9 @@ const Meals = () => {
                 key={i}
                 onClick={() => setCurrentPage(i + 1)}
                 className={`btn btn-sm ${
-                  currentPage === i + 1 ? "btn-primary text-white" : "btn-outline"
+                  currentPage === i + 1
+                    ? "btn-primary text-white"
+                    : "btn-outline"
                 }`}
               >
                 {i + 1}
