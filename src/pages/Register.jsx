@@ -1,158 +1,149 @@
-import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "../firebase/firebase.config";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import useAuth from "../hooks/useAuth";
 import toast from "react-hot-toast";
-import useAxiosSecure from "../hooks/useAxiosSecure";
 
 const Register = () => {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    confirmPassword: "",
-    address: "",
-    avatar: "",
-  });
-  const [loading, setLoading] = useState(false);
+  const { register: registerUser, googleLogin, user } = useAuth();
   const navigate = useNavigate();
-  const axiosSecure = useAxiosSecure();
+  const { register, handleSubmit, getValues, formState: { errors, isSubmitting } } = useForm();
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+  useEffect(() => {
+    document.title = "Register | LocalChefBazaar";
+  }, []);
+
+  useEffect(() => {
+    if (user) navigate("/");
+  }, [user, navigate]);
+
+  // Email/password register
+  const onSubmit = async (data) => {
+    try {
+      await registerUser(data.name, data.email, data.password, data.profileImage, data.address);
+      toast.success("Account created successfully!");
+      navigate("/");
+    } catch (err) {
+      toast.error(err.message || "Registration failed");
+    }
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-
-    if (formData.password !== formData.confirmPassword) {
-      toast.error("Passwords do not match");
-      return;
-    }
-
-    setLoading(true);
+  // Google signup
+  const handleGoogleSignup = async () => {
     try {
-      // ✅ Firebase registration
-      const userCredential = await createUserWithEmailAndPassword(
-        auth,
-        formData.email,
-        formData.password
-      );
-
-      // ✅ Update Firebase profile
-      await updateProfile(userCredential.user, {
-        displayName: formData.name,
-        photoURL: formData.avatar,
-      });
-
-      // ✅ Save user profile in backend (MongoDB)
-      await axiosSecure.post("/auth/register", {
-        name: formData.name,
-        email: formData.email,
-        address: formData.address,
-        avatar: formData.avatar,
-        role: "user",       // default role
-        status: "active",   // default status
-      });
-
-      toast.success("Registration successful! Please login.");
-      navigate("/login");
+      await googleLogin();
+      toast.success("Account created with Google!");
+      navigate("/");
     } catch (err) {
-      console.error("Registration error:", err);
-
-      if (err.code === "auth/email-already-in-use") {
-        toast.error("This email is already registered. Please login instead.");
-        navigate("/login");
-      } else if (err.code === "auth/weak-password") {
-        toast.error("Password should be at least 6 characters.");
-      } else {
-        toast.error(err.message || "Registration failed. Try again.");
-      }
-    } finally {
-      setLoading(false);
+      toast.error(err.message || "Google signup failed");
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100 px-4">
-      <div className="bg-white shadow-md rounded-lg p-8 w-full max-w-md">
-        <h2 className="text-3xl font-bold text-center mb-6 text-orange-600">
-          Register
-        </h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <input
-            type="text"
-            name="name"
-            placeholder="Name"
-            value={formData.name}
-            onChange={handleChange}
-            required
-            disabled={loading}
-            className="input input-bordered w-full"
-          />
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            disabled={loading}
-            className="input input-bordered w-full"
-          />
-          <input
-            type="text"
-            name="avatar"
-            placeholder="Profile Image URL"
-            value={formData.avatar}
-            onChange={handleChange}
-            className="input input-bordered w-full"
-          />
-          <input
-            type="text"
-            name="address"
-            placeholder="Address"
-            value={formData.address}
-            onChange={handleChange}
-            className="input input-bordered w-full"
-          />
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            disabled={loading}
-            className="input input-bordered w-full"
-          />
-          <input
-            type="password"
-            name="confirmPassword"
-            placeholder="Confirm Password"
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required
-            disabled={loading}
-            className="input input-bordered w-full"
-          />
-
-          <button
-            type="submit"
-            className="btn btn-primary w-full text-white"
-            disabled={loading}
-          >
-            {loading ? "Registering..." : "Register"}
-          </button>
-        </form>
-
-        <p className="text-center text-sm mt-4">
-          Already have an account?{" "}
-          <Link to="/login" className="text-orange-600 font-semibold">
-            Login
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-yellow-50 px-4 py-10">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <Link to="/" className="inline-flex items-center gap-2 mb-4">
+            <span className="text-4xl">🍽️</span>
+            <span className="font-display font-bold text-2xl text-dark">LocalChefBazaar</span>
           </Link>
-        </p>
+          <h2 className="font-display text-3xl font-bold text-dark">Create Account</h2>
+          <p className="text-gray-500 mt-1">Join thousands of food lovers</p>
+        </div>
+
+        <div className="bg-white rounded-2xl shadow-lg p-8">
+          {/* Google Signup Button */}
+          <button
+            onClick={handleGoogleSignup}
+            className="btn btn-outline w-full rounded-xl mb-4 gap-2 hover:bg-gray-50 border-gray-300"
+          >
+            <img
+              src="https://www.svgrepo.com/show/475656/google-color.svg"
+              alt="Google"
+              className="w-5 h-5"
+            />
+            Continue with Google
+          </button>
+
+          {/* Divider */}
+          <div className="divider text-gray-400 text-sm">OR</div>
+
+          {/* Email/Password Form */}
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+            <div>
+              <label className="label"><span className="label-text font-medium">Full Name</span></label>
+              <input type="text" placeholder="John Doe"
+                className="input input-bordered w-full focus:input-primary"
+                {...register("name", { required: "Name is required" })} />
+              {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name.message}</p>}
+            </div>
+
+            <div>
+              <label className="label"><span className="label-text font-medium">Email</span></label>
+              <input type="email" placeholder="you@example.com"
+                className="input input-bordered w-full focus:input-primary"
+                {...register("email", { required: "Email is required" })} />
+              {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email.message}</p>}
+            </div>
+
+            <div>
+              <label className="label"><span className="label-text font-medium">Profile Image URL</span></label>
+              <input type="url" placeholder="https://..."
+                className="input input-bordered w-full focus:input-primary"
+                {...register("profileImage", { required: "Profile image URL is required" })} />
+              {errors.profileImage && <p className="text-red-400 text-xs mt-1">{errors.profileImage.message}</p>}
+            </div>
+
+            <div>
+              <label className="label"><span className="label-text font-medium">Address</span></label>
+              <input type="text" placeholder="Your address"
+                className="input input-bordered w-full focus:input-primary"
+                {...register("address", { required: "Address is required" })} />
+              {errors.address && <p className="text-red-400 text-xs mt-1">{errors.address.message}</p>}
+            </div>
+
+            <div>
+              <label className="label"><span className="label-text font-medium">Password</span></label>
+              <input type="password" placeholder="••••••••"
+                className="input input-bordered w-full focus:input-primary"
+                {...register("password", {
+                  required: "Password is required",
+                  minLength: { value: 6, message: "Min 6 characters" },
+                })} />
+              {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password.message}</p>}
+            </div>
+
+            <div>
+              <label className="label"><span className="label-text font-medium">Confirm Password</span></label>
+              <input type="password" placeholder="••••••••"
+                className="input input-bordered w-full focus:input-primary"
+                {...register("confirmPassword", {
+                  required: "Please confirm password",
+                  validate: (val) =>
+                    val === getValues("password") || "Passwords do not match",
+                })} />
+              {errors.confirmPassword && <p className="text-red-400 text-xs mt-1">{errors.confirmPassword.message}</p>}
+            </div>
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="btn btn-primary text-white w-full rounded-xl text-base mt-2"
+            >
+              {isSubmitting
+                ? <span className="loading loading-spinner loading-sm"></span>
+                : "Create Account"}
+            </button>
+          </form>
+
+          <p className="text-center text-sm text-gray-500 mt-6">
+            Already have an account?{" "}
+            <Link to="/login" className="text-primary font-semibold hover:underline">
+              Login here
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

@@ -1,20 +1,14 @@
-import { useContext } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { AuthContext } from "../context/AuthContext";
+// import { useAuth } from "../context/AuthContext";
+import useAuth from "../hooks/useAuth";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 const PrivateRoute = ({ children }) => {
-  const { user, loading } = useContext(AuthContext);
+  const { user, loading } = useAuth();
   const location = useLocation();
 
-  if (loading) {
-    return <div className="flex justify-center items-center min-h-screen">
-      <span className="loading loading-spinner loading-lg text-orange-600"></span>
-    </div>;
-  }
-
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
+  if (loading) return <LoadingSpinner />;
+  if (!user) return <Navigate to="/login" state={{ from: location }} replace />;
 
   return children;
 };

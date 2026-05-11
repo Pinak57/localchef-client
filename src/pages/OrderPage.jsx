@@ -1,129 +1,135 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import useAxiosSecure from "../hooks/useAxiosSecure";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import axios from "axios";
+import axiosInstance from "../hooks/useAxios";
+import useAuth from "../hooks/useAuth";
 import Swal from "sweetalert2";
-import toast from "react-hot-toast";
 
-const OrderPage = ({ meal, user }) => {
-  const [quantity, setQuantity] = useState(1);
-  const [address, setAddress] = useState("");
-  const axiosSecure = useAxiosSecure();
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+const OrderPage = () => {
+  const { id } = useParams();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const [meal, setMeal] = useState(null);
+  const [quantity, setQuantity] = useState(1);
 
-  const handleConfirmOrder = async (e) => {
-    e.preventDefault();
-    if (!meal) {
-      toast.error("Meal data not found");
-      return;
-    }
+  const { register, handleSubmit, formState: { errors } } = useForm();
 
-    const totalPrice = meal.price * quantity;
+  useEffect(() => {
+    document.title = "Order | LocalChefBazaar";
+    axios.get(`${API}/meals/${id}`).then((res) => setMeal(res.data.meal));
+  }, [id]);
 
+  const totalPrice = meal ? meal.price * quantity : 0;
+
+  const onSubmit = async (data) => {
     const result = await Swal.fire({
-      title: `Your total price is ৳${totalPrice}`,
-      text: "Do you want to confirm the order?",
+      title: "Confirm Order",
+      text: `Your total price is ৳${totalPrice}. Do you want to confirm the order?`,
       icon: "question",
       showCancelButton: true,
-      confirmButtonText: "Yes, confirm",
-      cancelButtonText: "Cancel",
+      confirmButtonColor: "#16a34a",
+      cancelButtonColor: "#ef4444",
+      confirmButtonText: "Yes, Order!",
     });
 
     if (result.isConfirmed) {
       try {
-        const orderData = {
-          mealId: meal._id,              // ✅ use mealId
-          mealName: meal.foodName,       // ✅ use foodName
+        const res = await axiosInstance.post("/orders", {
+          foodId: meal._id,
+          mealName: meal.foodName,
           price: meal.price,
-          quantity,
+          quantity: parseInt(data.quantity),
           chefId: meal.chefId,
           chefName: meal.chefName,
-          paymentStatus: "Pending",
-          userEmail: user.email,
-          userAddress: address,
-          orderStatus: "pending",
-          orderTime: new Date().toISOString(),
-        };
-
-        const res = await axiosSecure.post("/orders", orderData);
+          userAddress: data.userAddress,
+        });
 
         if (res.data.success) {
-          Swal.fire("Order placed successfully!", "", "success");
+          Swal.fire({ icon: "success", title: "Order Placed!", text: "Your order has been placed successfully!", confirmButtonColor: "#16a34a" });
           navigate("/dashboard/my-orders");
-        } else {
-          toast.error(res.data.message || "Failed to place order");
         }
       } catch (err) {
-        console.error("Order error:", err);
-        toast.error("Something went wrong");
+        Swal.fire({ icon: "error", title: "Failed", text: err.response?.data?.message || "Failed to place order" });
       }
     }
   };
 
-  if (!meal) {
-    return <p className="text-center text-red-500">Meal not found.</p>;
-  }
+  if (!meal) return (
+    <div className="flex justify-center items-center min-h-screen"><div className="loader"></div></div>
+  );
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h2 className="text-3xl font-bold text-center mb-6 text-orange-600">
-        Confirm Your Order
-      </h2>
+    <div className="max-w-2xl mx-auto px-6 py-12">
+      <div className="text-center mb-8">
+        <span className="text-primary font-semibold text-sm uppercase tracking-widest">Checkout</span>
+        <h1 className="font-display text-4xl font-bold text-dark mt-2">Confirm Your Order</h1>
+      </div>
 
-      <form
-        onSubmit={handleConfirmOrder}
-        className="bg-white shadow-md rounded-lg p-6 max-w-md mx-auto space-y-4"
-      >
-        <div>
-          <label className="block font-medium">Meal Name</label>
-          <input
-            type="text"
-            value={meal.foodName}   // ✅ use foodName
-            readOnly
-            className="input input-bordered w-full"
-          />
+      <div className="bg-white rounded-2xl shadow-md p-8">
+        {/* Meal summary */}
+        <div className="flex gap-4 mb-6 p-4 bg-green-50 rounded-xl">
+          <img src={meal.foodImage} alt={meal.foodName} className="w-20 h-20 rounded-xl object-cover" />
+          <div>
+            <h3 className="font-display font-bold text-dark text-lg">{meal.foodName}</h3>
+            <p className="text-sm text-gray-500">Chef: {meal.chefName} · ID: {meal.chefId}</p>
+            <p className="text-primary font-bold text-lg mt-1">৳{meal.price} / item</p>
+          </div>
         </div>
 
-        <div>
-          <label className="block font-medium">Price (৳)</label>
-          <input
-            type="number"
-            value={meal.price}
-            readOnly
-            className="input input-bordered w-full"
-          />
-        </div>
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="label"><span className="label-text font-medium">Meal Name</span></label>
+              <input value={meal.foodName} readOnly className="input input-bordered w-full bg-gray-50" />
+            </div>
+            <div>
+              <label className="label"><span className="label-text font-medium">Price per item</span></label>
+              <input value={`৳${meal.price}`} readOnly className="input input-bordered w-full bg-gray-50" />
+            </div>
+            <div>
+              <label className="label"><span className="label-text font-medium">Chef ID</span></label>
+              <input value={meal.chefId} readOnly className="input input-bordered w-full bg-gray-50" />
+            </div>
+            <div>
+              <label className="label"><span className="label-text font-medium">Your Email</span></label>
+              <input value={user?.email} readOnly className="input input-bordered w-full bg-gray-50" />
+            </div>
+          </div>
 
-        <div>
-          <label className="block font-medium">Quantity</label>
-          <input
-            type="number"
-            min="1"
-            value={quantity}
-            onChange={(e) => setQuantity(parseInt(e.target.value))}
-            className="input input-bordered w-full"
-            required
-          />
-        </div>
+          {/* ✅ Use onChange instead of watch() to avoid memoization warning */}
+          <div>
+            <label className="label"><span className="label-text font-medium">Quantity</span></label>
+            <input
+              type="number"
+              min={1}
+              max={20}
+              className="input input-bordered w-full focus:input-primary"
+              {...register("quantity", { required: true, min: 1 })}
+              onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+            />
+          </div>
 
-        <div>
-          <label className="block font-medium">Delivery Address</label>
-          <input
-            type="text"
-            value={address}
-            onChange={(e) => setAddress(e.target.value)}
-            className="input input-bordered w-full"
-            required
-          />
-        </div>
+          <div>
+            <label className="label"><span className="label-text font-medium">Delivery Address</span></label>
+            <textarea rows={2} placeholder="Enter your delivery address..." className="textarea textarea-bordered w-full focus:textarea-primary"
+              {...register("userAddress", { required: "Address is required" })} />
+            {errors.userAddress && <p className="text-red-400 text-xs mt-1">{errors.userAddress.message}</p>}
+          </div>
 
-        <button
-          type="submit"
-          className="btn btn-primary w-full text-white"
-          disabled={!address}
-        >
-          Confirm Order
-        </button>
-      </form>
+          {/* Total */}
+          <div className="bg-yellow-50 rounded-xl p-4 flex justify-between items-center">
+            <span className="font-semibold text-dark">Total Price</span>
+            <span className="font-display text-2xl font-bold text-primary">৳{totalPrice}</span>
+          </div>
+
+          <button type="submit" className="btn btn-primary text-white w-full rounded-xl text-base">
+            Confirm Order 🛒
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

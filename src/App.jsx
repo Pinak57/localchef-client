@@ -1,21 +1,32 @@
-import { Toaster } from "react-hot-toast";
-import AuthProvider from "./context/AuthProvider";
-import { RouterProvider } from "react-router-dom";
-import AppRouter from "./routes/AppRouter";
+import { Outlet, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
 
-function App() {
+const pageTitles = {
+  "/": "Home | LocalChefBazaar",
+  "/meals": "Meals | LocalChefBazaar",
+  "/login": "Login | LocalChefBazaar",
+  "/register": "Register | LocalChefBazaar",
+  "/payment-success": "Payment Success | LocalChefBazaar",
+};
+
+const App = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    document.title = pageTitles[location.pathname] || "LocalChefBazaar";
+  }, [location]);
+
   return (
-    <AuthProvider>
-      <Toaster
-        position="top-right"
-        toastOptions={{
-          duration: 3000,
-          style: { fontSize: "14px" },
-        }}
-      />
-      <RouterProvider router={AppRouter} />
-    </AuthProvider>
+    <div className="min-h-screen flex flex-col bg-light font-body">
+      <Navbar />
+      <main className="flex-1">
+        <Outlet />
+      </main>
+      <Footer />
+    </div>
   );
-}
+};
 
 export default App;

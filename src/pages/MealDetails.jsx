@@ -1,224 +1,245 @@
-import { useEffect, useState, useContext } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import LoadingSpinner from "../components/LoadingSpinner";
-import useAxiosSecure from "../hooks/useAxiosSecure";
-import { AuthContext } from "../context/AuthContext";
+import { useForm } from "react-hook-form";
+import axios from "axios";
+import axiosInstance from "../hooks/useAxios";
+import useAuth from "../hooks/useAuth";
 import toast from "react-hot-toast";
-import Swal from "sweetalert2";
+import { FiStar, FiHeart, FiClock, FiMapPin } from "react-icons/fi";
+
+const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+
+// ✅ Helper — always returns an array from ingredients
+const parseIngredients = (ingredients) => {
+  if (Array.isArray(ingredients)) return ingredients;
+  if (typeof ingredients === "string" && ingredients.trim())
+    return ingredients.split(",").map((i) => i.trim());
+  return [];
+};
 
 const MealDetails = () => {
   const { id } = useParams();
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [meal, setMeal] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
-  const axiosSecure = useAxiosSecure();
-  const { user } = useContext(AuthContext);
-  const navigate = useNavigate();
+
+  const { register, handleSubmit, reset, formState: { errors } } = useForm();
+
+  function fetchMeal() {
+    axios.get(`${API}/meals/${id}`)
+      .then((res) => { setMeal(res.data.meal); setLoading(false); })
+      .catch(() => setLoading(false));
+  }
+
+  function fetchReviews() {
+    axios.get(`${API}/reviews/meal/${id}`)
+      .then((res) => setReviews(res.data.reviews || []));
+  }
 
   useEffect(() => {
-    if (!user) {
-      toast.error("Please login to view meal details");
-      navigate("/login");
-    }
-  }, [user, navigate]);
-
-  useEffect(() => {
-    const fetchMeal = async () => {
-      try {
-        const res = await axiosSecure.get(`/meals/${id}`);
-        setMeal(res.data);
-      } catch (err) {
-        console.error("Error fetching meal details:", err);
-        toast.error("Failed to load meal details");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    const fetchReviews = async () => {
-      try {
-        const res = await axiosSecure.get(`/reviews/${id}`);
-        setReviews(res.data || []);
-      } catch (err) {
-        console.error("Error fetching reviews:", err);
-      }
-    };
-
+    document.title = "Meal Details | LocalChefBazaar";
     fetchMeal();
     fetchReviews();
-  }, [id, axiosSecure]);
+  }, [id]);
 
-    // ✅ Add to favorites
   const handleAddFavorite = async () => {
-    if (!user) {
-      toast.error("You must be logged in to add favorites");
-      navigate("/login");
-      return;
-    }
-
     try {
-      const res = await fetch("http://localhost:5000/favorites", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include", // ✅ send JWT cookie
-        body: JSON.stringify({
-          mealId: meal._id,
-          mealName: meal.foodName,   // ✅ use foodName from collection
-          chefId: meal.chefId,
-          chefName: meal.chefName,
-          price: meal.price,
-          foodImage: meal.foodImage,
-        }),
-      });
-
-      const data = await res.json();
-      if (res.ok && data.success) {
-        toast.success(`${meal.foodName} added to favorites!`);
-      } else {
-        toast.error(data.message || "Failed to add favorite");
-      }
-    } catch (err) {
-      console.error("Favorite error:", err);
-      toast.error("Something went wrong");
+      const res = await axiosInstance.post(`/favorites/${id}`);
+      if (res.data.success) toast.success("Added to favorites! ❤️");
+      else toast.error(res.data.message || "Already in favorites");
+    } catch {
+      toast.error("Failed to add to favorites");
     }
   };
 
-  const handleReview = async (e) => {
-    e.preventDefault();
-    const form = e.target;
-    const rating = form.rating.value;
-    const comment = form.comment.value;
-
+  const onSubmitReview = async (data) => {
     try {
-      const res = await axiosSecure.post("/reviews", {
-        foodId: meal._id,
-        reviewerName: user.name,
-        reviewerImage: user.avatar || "https://via.placeholder.com/50",
-        rating: parseInt(rating),
-        comment,
-        date: new Date().toISOString(),
+      const res = await axiosInstance.post(`/reviews/${id}`, {
+        reviewerName: user.displayName,
+        reviewerImage: user.photoURL,
+        mealName: meal.foodName,
+        rating: parseInt(data.rating),
+        comment: data.comment,
       });
-
       if (res.data.success) {
         toast.success("Review submitted successfully!");
-        setReviews((prev) => [
-          ...prev,
-          {
-            foodId: meal._id,
-            reviewerName: user.name,
-            reviewerImage: user.avatar || "https://via.placeholder.com/50",
-            rating: parseInt(rating),
-            comment,
-            date: new Date().toISOString(),
-          },
-        ]);
-        form.reset();
-      } else {
-        toast.error(res.data.message || "Failed to submit review");
+        reset();
+        fetchReviews();
       }
-    } catch (err) {
-      console.error("Error submitting review:", err);
-      toast.error("Something went wrong");
+    } catch {
+      toast.error("Failed to submit review");
     }
   };
 
-  if (loading) return <LoadingSpinner message="Loading meal details..." />;
-  if (!meal) return <p className="text-center text-gray-600">Meal not found.</p>;
+  if (loading) return (
+    <div className="flex justify-center items-center min-h-screen">
+      <div className="loader"></div>
+    </div>
+  );
+
+  if (!meal) return (
+    <div className="text-center py-20 text-gray-400">
+      <div className="text-6xl mb-4">🍽️</div>
+      <p>Meal not found.</p>
+    </div>
+  );
+
+  const ingredients = parseIngredients(meal.ingredients);
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      {/* ✅ Responsive Meal Info */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <img
-          src={meal.foodImage || "https://via.placeholder.com/400x250"}
-          alt={meal.foodName}
-          className="rounded-lg shadow-md w-full h-64 sm:h-80 md:h-96 object-cover"
-        />
-        <div className="flex flex-col justify-between">
-          <div>
-            <h2 className="text-2xl md:text-3xl font-bold mb-4">{meal.foodName}</h2>
-            <p className="text-gray-600 mb-2">Chef: {meal.chefName}</p>
-            <p className="text-gray-600 mb-2">Chef ID: {meal.chefId}</p>
-            <p className="text-gray-600 mb-2">Ingredients: {meal.ingredients}</p>
-            <p className="text-gray-600 mb-2">Delivery Area: {meal.deliveryArea}</p>
-            <p className="text-gray-600 mb-2">Delivery Time: {meal.deliveryTime} mins</p>
-            <p className="text-gray-600 mb-2">Chef’s Experience: {meal.chefExperience}</p>
-            <p className="text-gray-600 mb-2">Rating: ⭐ {meal.rating}</p>
-            <p className="text-orange-600 font-semibold text-xl mb-4">৳{meal.price}</p>
+    <div className="max-w-5xl mx-auto px-6 py-12">
+      {/* ── Meal Info ────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 mb-14">
+        {/* Image */}
+        <div className="rounded-2xl overflow-hidden shadow-lg h-80 lg:h-full">
+          <img
+            src={meal.foodImage}
+            alt={meal.foodName}
+            className="w-full h-full object-cover"
+          />
+        </div>
+
+        {/* Details */}
+        <div>
+          <h1 className="font-display text-4xl font-bold text-dark mb-3">{meal.foodName}</h1>
+
+          <div className="flex items-center gap-3 mb-4">
+            <span className="badge badge-success text-white">⭐ {meal.rating || "N/A"}</span>
+            <span className="text-gray-500 text-sm">
+              by <strong>{meal.chefName}</strong> (ID: {meal.chefId})
+            </span>
           </div>
-          <div className="flex flex-col sm:flex-row gap-4 mt-4">
+
+          {/* Info Grid */}
+          <div className="grid grid-cols-2 gap-3 mb-5 text-sm">
+            <div className="bg-green-50 rounded-xl p-3">
+              <p className="text-gray-400 text-xs mb-1">Price</p>
+              <p className="font-bold text-primary text-lg">৳{meal.price}</p>
+            </div>
+            <div className="bg-yellow-50 rounded-xl p-3">
+              <p className="text-gray-400 text-xs mb-1">Delivery Area</p>
+              <p className="font-semibold text-dark flex items-center gap-1">
+                <FiMapPin size={12} />{meal.deliveryArea || "Dhaka"}
+              </p>
+            </div>
+            <div className="bg-green-50 rounded-xl p-3">
+              <p className="text-gray-400 text-xs mb-1">Est. Delivery</p>
+              <p className="font-semibold text-dark flex items-center gap-1">
+                <FiClock size={12} />{meal.estimatedDeliveryTime || "N/A"}
+              </p>
+            </div>
+            <div className="bg-yellow-50 rounded-xl p-3">
+              <p className="text-gray-400 text-xs mb-1">Chef Experience</p>
+              <p className="font-semibold text-dark text-xs">{meal.chefExperience || "N/A"}</p>
+            </div>
+          </div>
+
+          {/* ✅ Ingredients - fixed, handles both string and array */}
+          <div className="mb-5">
+            <p className="text-gray-500 text-sm font-medium mb-2">Ingredients:</p>
+            <div className="flex flex-wrap gap-2">
+              {ingredients.length > 0 ? (
+                ingredients.map((ing, i) => (
+                  <span key={i} className="badge badge-outline badge-success text-xs">
+                    {ing}
+                  </span>
+                ))
+              ) : (
+                <span className="text-gray-400 text-xs">No ingredients listed</span>
+              )}
+            </div>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex gap-3">
             <button
-              onClick={() => navigate(`/order/${meal._id}`)}
-              className="btn btn-primary flex-1 text-white"
+              onClick={() => navigate(`/order/${id}`)}
+              className="btn btn-primary text-white flex-1 rounded-xl"
             >
-              Order Now
+              Order Now 🛒
             </button>
             <button
               onClick={handleAddFavorite}
-              className="btn btn-secondary flex-1"
+              className="btn btn-outline btn-primary rounded-xl px-4"
             >
-              Add to Favorites
+              <FiHeart size={18} />
             </button>
           </div>
         </div>
       </div>
 
-      {/* ✅ Responsive Review Section */}
-      <div className="mt-10 bg-white shadow-md rounded-lg p-6">
-        <h3 className="text-xl md:text-2xl font-bold mb-4">Reviews</h3>
+      {/* ── Reviews ──────────────────────────────── */}
+      <div>
+        <h2 className="font-display text-2xl font-bold text-dark mb-6">
+          Customer Reviews ({reviews.length})
+        </h2>
 
         {reviews.length === 0 ? (
-          <p className="text-gray-600">No reviews yet. Be the first to review!</p>
+          <p className="text-gray-400 text-sm mb-8">No reviews yet. Be the first!</p>
         ) : (
-          <div className="space-y-6">
-            {reviews.map((rev, i) => (
-              <div key={i} className="border-b pb-4">
+          <div className="space-y-4 mb-10">
+            {reviews.map((r) => (
+              <div key={r._id} className="bg-white rounded-2xl p-5 shadow-sm border border-green-100">
                 <div className="flex items-center gap-3 mb-2">
                   <img
-                    src={rev.reviewerImage}
-                    alt={rev.reviewerName}
-                    className="w-10 h-10 rounded-full object-cover"
+                    src={r.reviewerImage || "https://i.pravatar.cc/40"}
+                    className="w-9 h-9 rounded-full object-cover"
+                    alt=""
                   />
                   <div>
-                    <p className="font-semibold">{rev.reviewerName}</p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(rev.date).toLocaleString()}
-                    </p>
+                    <p className="font-semibold text-dark text-sm">{r.reviewerName}</p>
+                    <p className="text-xs text-gray-400">{new Date(r.date).toLocaleDateString()}</p>
+                  </div>
+                  <div className="ml-auto flex text-yellow-400">
+                    {Array.from({ length: r.rating || 0 }).map((_, i) => (
+                      <FiStar key={i} fill="currentColor" size={13} />
+                    ))}
                   </div>
                 </div>
-                <p className="text-yellow-600">⭐ {rev.rating}</p>
-                <p className="text-gray-700">{rev.comment}</p>
+                <p className="text-gray-600 text-sm">{r.comment}</p>
               </div>
             ))}
           </div>
         )}
 
-        {/* ✅ Responsive Add Review Form */}
-        <form onSubmit={handleReview} className="mt-6 space-y-4">
-          <div>
-            <label className="block mb-1 font-medium">Rating (1-5)</label>
-            <input
-              type="number"
-              name="rating"
-              min="1"
-              max="5"
-              className="input input-bordered w-full"
-              required
-            />
+        {/* Add Review Form */}
+        {user && (
+          <div className="bg-white rounded-2xl p-6 shadow-sm border border-green-100">
+            <h3 className="font-display font-bold text-lg text-dark mb-4">Give a Review</h3>
+            <form onSubmit={handleSubmit(onSubmitReview)} className="space-y-4">
+              <div>
+                <label className="label"><span className="label-text">Rating</span></label>
+                <select
+                  className="select select-bordered w-full focus:select-primary"
+                  {...register("rating", { required: true })}
+                >
+                  <option value="">Select rating</option>
+                  {[1,2,3,4,5].map(n => (
+                    <option key={n} value={n}>{"⭐".repeat(n)} ({n})</option>
+                  ))}
+                </select>
+                {errors.rating && <p className="text-red-400 text-xs mt-1">Rating is required</p>}
+              </div>
+              <div>
+                <label className="label"><span className="label-text">Comment</span></label>
+                <textarea
+                  className="textarea textarea-bordered w-full focus:textarea-primary"
+                  rows={3}
+                  placeholder="Share your experience..."
+                  {...register("comment", { required: true, minLength: 10 })}
+                />
+                {errors.comment && (
+                  <p className="text-red-400 text-xs mt-1">Comment must be at least 10 characters</p>
+                )}
+              </div>
+              <button type="submit" className="btn btn-primary text-white w-full rounded-xl">
+                Submit Review
+              </button>
+            </form>
           </div>
-          <div>
-            <label className="block mb-1 font-medium">Comment</label>
-            <textarea
-              name="comment"
-              className="textarea textarea-bordered w-full"
-              placeholder="Write your review..."
-              required
-            ></textarea>
-          </div>
-          <button type="submit" className="btn btn-secondary w-full text-white">
-            Give Review
-          </button>
-        </form>
+        )}
       </div>
     </div>
   );
