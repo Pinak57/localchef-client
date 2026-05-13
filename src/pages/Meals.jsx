@@ -163,67 +163,69 @@ const Meals = () => {
       {/* ══════════════════════════════════════
           HERO BANNER
       ══════════════════════════════════════ */}
-      <div className="bg-gradient-to-br from-green-700 via-green-600 to-green-500 py-14 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <span className="inline-block bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-4 uppercase tracking-widest">
-            🍽️ Our Menu
-          </span>
-          <h1 className="font-display text-4xl lg:text-5xl font-bold text-white mb-3">
-            All Meals
-          </h1>
-          <p className="text-green-100 text-base mb-8">
-            {totalMeals > 0
-              ? `${totalMeals} fresh homemade meals from local chefs`
-              : "Browse homemade meals from talented local chefs near you"}
-          </p>
+      {/* HERO SECTION */}
+<div className="relative overflow-hidden bg-gradient-to-br from-green-700 via-green-600 to-green-500 py-14 px-6">
 
-          {/* ✅ Search bar on top */}
-          <form onSubmit={handleSearch} className="flex max-w-2xl mx-auto gap-2">
-            <div className="relative flex-1">
-              <FiSearch
-                className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
-                size={18}
-              />
-              <input
-                type="text"
-                placeholder="Search meals e.g. Biryani, Fish curry..."
-                value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                className="input w-full pl-12 rounded-xl border-none shadow-lg h-12 text-sm"
-              />
-              {searchInput && (
-                <button
-                  type="button"
-                  onClick={() => { setSearchInput(""); setSearch(""); setPage(1); }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-red-400 transition-colors"
-                >
-                  <FiX size={16} />
-                </button>
-              )}
-            </div>
-            <button
-              type="submit"
-              className="btn bg-yellow-400 hover:bg-yellow-300 text-dark border-none rounded-xl px-8 font-bold h-12 min-h-0 text-sm"
-            >
-              Search
-            </button>
-          </form>
+  {/* Left Chef */}
+  <img
+    src="https://i.postimg.cc/Ssf3w45c/left.png"
+    alt="Chef"
+    className="hidden md:block absolute left-0 bottom-0 h-64 lg:h-80 object-contain"
+  />
 
-          {/* Quick search tags */}
-          <div className="flex flex-wrap gap-2 justify-center mt-4">
-            {["Biryani", "Fish", "Chicken", "Beef", "Vegetarian"].map((tag) => (
-              <button
-                key={tag}
-                onClick={() => { setSearchInput(tag); setSearch(tag); setPage(1); }}
-                className="bg-white/20 hover:bg-white/30 text-white text-xs px-3 py-1.5 rounded-full transition-all"
-              >
-                {tag}
-              </button>
-            ))}
-          </div>
-        </div>
+  {/* Right Chef */}
+  <img
+    src="https://i.postimg.cc/zGYwRh3v/Right.png"
+    alt="Chef"
+    className="hidden md:block absolute right-0 bottom-0 h-64 lg:h-80 object-contain"
+  />
+
+  <div className="max-w-4xl mx-auto text-center relative z-10">
+
+    {/* Badge */}
+    <span className="inline-block bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-4 uppercase tracking-widest">
+      🍽️ Our Menu
+    </span>
+
+    {/* Title */}
+    <h1 className="text-4xl lg:text-5xl font-bold text-white mb-3">
+      All Meals
+    </h1>
+
+    {/* Description */}
+    <p className="text-green-100 mb-8">
+      {totalMeals > 0
+        ? `${totalMeals} fresh homemade meals from local chefs`
+        : "Browse homemade meals from talented local chefs near you"}
+    </p>
+
+    {/* Search */}
+    <form onSubmit={handleSearch} className="flex max-w-2xl mx-auto gap-2">
+      <div className="relative flex-1">
+        <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" />
+
+        <input
+          value={searchInput}
+          onChange={(e) => setSearchInput(e.target.value)}
+          placeholder="Search meals..."
+          className="input w-full pl-12 h-12 rounded-xl shadow-lg border-none"
+        />
+
+        {searchInput && (
+          <FiX
+            onClick={() => { setSearchInput(""); setSearch(""); setPage(1); }}
+            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 cursor-pointer"
+          />
+        )}
       </div>
 
+      <button className="btn bg-yellow-400 hover:bg-yellow-300 font-bold px-8 rounded-xl">
+        Search
+      </button>
+    </form>
+
+  </div>
+</div>
       <div className="max-w-7xl mx-auto px-6 py-8">
 
         {/* Mobile Filter Toggle */}

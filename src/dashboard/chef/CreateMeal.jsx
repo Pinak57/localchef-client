@@ -40,7 +40,7 @@ const CreateMeal = () => {
         chefName:              data.chefName,
         foodImage:             data.foodImage,
         price:                 parseFloat(data.price),
-        rating:                0,
+        rating: parseFloat(data.rating),
         // ✅ Always save as array
         ingredients:           data.ingredients.split(",").map((i) => i.trim()).filter(Boolean),
         estimatedDeliveryTime: data.estimatedDeliveryTime,
@@ -112,6 +112,36 @@ const CreateMeal = () => {
                 />
                 {errors.price && <p className="text-red-400 text-xs mt-1">{errors.price.message}</p>}
               </div>
+
+              {/* Rating */}
+<div>
+  <label className="label">
+    <span className="label-text font-medium">Rating (1 - 5) *</span>
+  </label>
+
+  <select
+    className="select select-bordered w-full focus:select-primary"
+    {...register("rating", {
+      required: "Rating is required",
+      min: { value: 1, message: "Minimum rating is 1" },
+      max: { value: 5, message: "Maximum rating is 5" },
+    })}
+    defaultValue=""
+  >
+    <option value="" disabled>Select rating</option>
+    <option value="1">1 ⭐</option>
+    <option value="2">2 ⭐</option>
+    <option value="3">3 ⭐</option>
+    <option value="4">4 ⭐</option>
+    <option value="5">5 ⭐</option>
+  </select>
+
+  {errors.rating && (
+    <p className="text-red-400 text-xs mt-1">
+      {errors.rating.message}
+    </p>
+  )}
+</div>
 
               {/* Delivery Area */}
               <div>
