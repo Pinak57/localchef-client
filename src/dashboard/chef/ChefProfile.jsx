@@ -11,7 +11,6 @@ const ChefProfile = () => {
   useEffect(() => { document.title = "Chef Profile | Dashboard"; }, []);
 
   if (!dbUser) return <div className="flex justify-center py-20"><div className="loader"></div></div>;
-
   return (
     <div>
       <h1 className="font-display text-3xl font-bold text-dark mb-8">Chef Profile</h1>
