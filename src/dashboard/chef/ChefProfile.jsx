@@ -122,5 +122,4 @@ const ChefProfile = () => {
     </div>
   );
 };
-
 export default ChefProfile;
