@@ -76,7 +76,6 @@ const Footer = () => {
           </div>
 
         </div>
-
         {/* Bottom */}
         <div className="border-t mt-10 pt-6 flex flex-col md:flex-row items-center justify-between gap-3">
 
