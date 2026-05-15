@@ -28,7 +28,6 @@ const DEMO_ACCOUNTS = [
     color: "btn-warning",
   },
 ];
-
 const Login = () => {
   const { login, googleLogin, user } = useAuth();
   const navigate = useNavigate();
