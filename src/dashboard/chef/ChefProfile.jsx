@@ -106,7 +106,6 @@ const ChefProfile = () => {
             </div>
           ))}
         </div>
-
         {/* Action Button */}
         <div className="mt-8">
           {dbUser.role !== "admin" && (
