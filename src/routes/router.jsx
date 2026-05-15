@@ -30,6 +30,8 @@ import ManageUsers from "../dashboard/admin/ManageUsers";
 import ManageRequests from "../dashboard/admin/ManageRequests";
 import Statistics from "../dashboard/admin/Statistics";
 
+import About from "../pages/About";
+
 const router = createBrowserRouter([
   {
     path: "/",
@@ -37,7 +39,9 @@ const router = createBrowserRouter([
     errorElement: <ErrorPage />,
     children: [
       { index: true, element: <Home /> },
+      
       { path: "meals", element: <Meals /> },
+      { path: "about", element: <About /> },
       {
         path: "meals/:id",
         element: <PrivateRoute><MealDetails /></PrivateRoute>,
