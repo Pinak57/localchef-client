@@ -17,7 +17,6 @@ const Home = () => {
     axios.get(`${API}/meals?limit=6&sort=latest`).then((res) => setMeals(res.data.meals || []));
     axios.get(`${API}/reviews`).then((res) => setReviews((res.data.reviews || []).slice(0, 6)));
   }, []);
-
   return (
     <div className="overflow-x-hidden">
 
