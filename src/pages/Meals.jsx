@@ -6,7 +6,7 @@ import {
   FiX, FiChevronDown, FiGrid, FiList
 } from "react-icons/fi";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL || "https://localchef-server.onrender.com";
 
 const Meals = () => {
   const [meals, setMeals]             = useState([]);
@@ -33,7 +33,7 @@ const Meals = () => {
 
   // Fetch meals
   useEffect(() => {
-    setLoading(true);
+    // setLoading(true);
     const params = { page, limit, search, sort };
     if (location) params.deliveryArea = location;
     axios

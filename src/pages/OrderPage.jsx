@@ -6,7 +6,7 @@ import axiosInstance from "../hooks/useAxios";
 import useAuth from "../hooks/useAuth";
 import Swal from "sweetalert2";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL || "https://localchef-server.onrender.com";
 
 const OrderPage = () => {
   const { id } = useParams();

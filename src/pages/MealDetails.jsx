@@ -7,7 +7,7 @@ import useAuth from "../hooks/useAuth";
 import toast from "react-hot-toast";
 import { FiStar, FiHeart, FiClock, FiMapPin } from "react-icons/fi";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL || "https://localchef-server.onrender.com";
 
 // ✅ Helper — always returns an array from ingredients
 const parseIngredients = (ingredients) => {

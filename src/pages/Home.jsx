@@ -5,7 +5,7 @@ import axios from "axios";
 import MealCard from "../components/MealCard";
 import { FiStar, FiArrowRight, FiShield, FiClock, FiHeart, FiTruck, FiCheck } from "react-icons/fi";
 
-const API = import.meta.env.VITE_API_URL || "http://localhost:5000";
+const API = import.meta.env.VITE_API_URL || "https://localchef-server.onrender.com";
 
 const Home = () => {
   const [meals, setMeals]     = useState([]);

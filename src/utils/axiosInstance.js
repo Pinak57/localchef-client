@@ -2,7 +2,7 @@ import axios from "axios";
 
 // ✅ Create axios instance
 const axiosInstance = axios.create({
-  baseURL: "http://localhost:5000", // change to your backend URL
+  baseURL: "https://localchef-server.onrender.com", // change to your backend URL
   withCredentials: true,            // send cookies with requests
   headers: {
     "Content-Type": "application/json",
