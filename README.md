@@ -11,7 +11,7 @@ Admins can manage users, requests, and view platform statistics.
 This project ensures secure role‑based access with JWT authentication and provides a smooth dashboard experience for each role.
 
 🌐 Live URL
-👉 LocalChefBazaar Live 
+👉 LocalChefBazaar Live  : https://localchefbazaaar.netlify.app/
 
 🚀 Key Features
 Authentication & Authorization
